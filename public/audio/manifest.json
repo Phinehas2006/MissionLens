@@ -1,0 +1,58 @@
+{
+  "provider": "ElevenLabs",
+  "voice": "Alice - Clear, Engaging Educator",
+  "tracks": {
+    "story-1": {
+      "1": "/audio/story-1/slide-01.mp3",
+      "2": "/audio/story-1/slide-02.mp3",
+      "3": "/audio/story-1/slide-03.mp3",
+      "4": "/audio/story-1/slide-04.mp3",
+      "5": "/audio/story-1/slide-05.mp3",
+      "6": "/audio/story-1/slide-06.mp3",
+      "7": "/audio/story-1/slide-07.mp3",
+      "8": "/audio/story-1/slide-08.mp3"
+    },
+    "story-2": {
+      "1": "/audio/story-2/slide-01.mp3",
+      "2": "/audio/story-2/slide-02.mp3",
+      "3": "/audio/story-2/slide-03.mp3",
+      "4": "/audio/story-2/slide-04.mp3",
+      "5": "/audio/story-2/slide-05.mp3",
+      "6": "/audio/story-2/slide-06.mp3",
+      "7": "/audio/story-2/slide-07.mp3",
+      "8": "/audio/story-2/slide-08.mp3"
+    },
+    "story-3": {
+      "1": "/audio/story-3/slide-01.mp3",
+      "2": "/audio/story-3/slide-02.mp3",
+      "3": "/audio/story-3/slide-03.mp3",
+      "4": "/audio/story-3/slide-04.mp3",
+      "5": "/audio/story-3/slide-05.mp3",
+      "6": "/audio/story-3/slide-06.mp3",
+      "7": "/audio/story-3/slide-07.mp3",
+      "8": "/audio/story-3/slide-08.mp3",
+      "9": "/audio/story-3/slide-09.mp3"
+    },
+    "story-4": {
+      "1": "/audio/story-4/slide-01.mp3",
+      "2": "/audio/story-4/slide-02.mp3",
+      "3": "/audio/story-4/slide-03.mp3",
+      "4": "/audio/story-4/slide-04.mp3",
+      "5": "/audio/story-4/slide-05.mp3",
+      "6": "/audio/story-4/slide-06.mp3",
+      "7": "/audio/story-4/slide-07.mp3",
+      "8": "/audio/story-4/slide-08.mp3"
+    },
+    "story-5": {
+      "1": "/audio/story-5/slide-01.mp3",
+      "2": "/audio/story-5/slide-02.mp3",
+      "3": "/audio/story-5/slide-03.mp3",
+      "4": "/audio/story-5/slide-04.mp3",
+      "5": "/audio/story-5/slide-05.mp3",
+      "6": "/audio/story-5/slide-06.mp3",
+      "7": "/audio/story-5/slide-07.mp3",
+      "8": "/audio/story-5/slide-08.mp3",
+      "9": "/audio/story-5/slide-09.mp3"
+    }
+  }
+}
