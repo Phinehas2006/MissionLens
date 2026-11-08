@@ -85,7 +85,7 @@ function Home() {
     else { v.pause(); setPlaying(false); }
   };
   return <section className="hero">
-      <video ref={videoRef} className="hero-video" src="/videos/landing-page-background.mp4" autoPlay={!reduceMotion} muted loop playsInline poster="/assets/moon-landscape.jpg" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} aria-hidden="true"/>
+      <video ref={videoRef} className="hero-video" src="/videos/landing-page-background.mp4" autoPlay={!reduceMotion} preload="auto" muted loop playsInline onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} aria-hidden="true"/>
       <div className="hero-tint"/><div className="hero-grid"/>
       <div className="hero-content"><p className="eyebrow hero-eyebrow"><span className="signal-dot"/> A FIELD GUIDE TO THE EXTRAORDINARY</p><h1>MissionLens</h1><p className="hero-tagline">An archive of the machines that went first.</p><p className="hero-copy">A rover, a lander, a spacecraft, a helicopter.<br className="desktop-break"/> Meet the machines that opened new worlds.</p>
         <div className="hero-actions"><Link className="button button-red" to="/stories">Explore the stories <span>↗</span></Link><Link className="button button-glass" to="/hardware">Enter Hardware Lab <span>↗</span></Link></div>
@@ -161,7 +161,7 @@ function StoryReader() {
   const fallbackIntervalRef = useRef<number | undefined>(undefined);
   const autoAdvanceRef = useRef(false);
   const allRef = useRef(false);
-  const cancel = useCallback(() => { allRef.current = false; setReadAll(false); setSpeaking(false); setPaused(false); setHighlight(-1); if (fallbackIntervalRef.current) window.clearInterval(fallbackIntervalRef.current); fallbackIntervalRef.current = undefined; if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute('src'); audioRef.current = null; } if ('speechSynthesis' in window) window.speechSynthesis.cancel(); utteranceRef.current = null; }, []);
+  const cancel = useCallback(() => { allRef.current = false; setReadAll(false); setSpeaking(false); setPaused(false); setHighlight(-1); if (fallbackIntervalRef.current) window.clearInterval(fallbackIntervalRef.current); fallbackIntervalRef.current = undefined; if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute('src'); audioRef.current = null; } const currentUtterance = utteranceRef.current; utteranceRef.current = null; if (currentUtterance) { currentUtterance.onend = null; currentUtterance.onerror = null; currentUtterance.onboundary = null; currentUtterance.onstart = null; } if ('speechSynthesis' in window) window.speechSynthesis.cancel(); }, []);
   useEffect(() => { if (autoAdvanceRef.current) { autoAdvanceRef.current = false; return; } cancel(); }, [index, cancel]);
   useEffect(() => {
     setSpeechSupported(typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window);
@@ -174,11 +174,22 @@ function StoryReader() {
   const close = () => { cancel(); if (location.state?.fromArchive) navigate(-1); else navigate('/stories'); };
   const speakAt = useCallback((slideIndex: number, all: boolean, forceBrowser = false) => {
     if (!story) return;
+    if (audioRef.current) {
+      const previousAudio = audioRef.current;
+      audioRef.current = null;
+      previousAudio.onended = null;
+      previousAudio.onerror = null;
+      previousAudio.pause();
+      previousAudio.removeAttribute('src');
+      previousAudio.load();
+    }
+    if (fallbackIntervalRef.current) window.clearInterval(fallbackIntervalRef.current);
+    fallbackIntervalRef.current = undefined;
+    const currentUtterance = utteranceRef.current; utteranceRef.current = null; if (currentUtterance) { currentUtterance.onend = null; currentUtterance.onerror = null; currentUtterance.onboundary = null; currentUtterance.onstart = null; } if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     const slide = story.slides[slideIndex]; if (!slide) { cancel(); return; }
     const text = slide.paragraphs.join('\n\n');
     const narrationPath = audioTracks[story.id]?.[String(slideIndex + 1)];
     if (narrationPath && !forceBrowser) {
-      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       const audio = new Audio(narrationPath);
       audio.preload = 'auto'; audio.volume = 1; audio.playbackRate = speed;
       audioRef.current = audio; allRef.current = all;
@@ -215,12 +226,13 @@ function StoryReader() {
     utterance.onboundary = e => { if (e.name === 'sentence') { preciseSentenceEvents = true; const j = sentences.findIndex(s => e.charIndex >= s.start && e.charIndex < s.end); setHighlight(j); } };
     utterance.onstart = () => { setHighlight(paragraphSentenceIndexes[0] ?? 0); fallbackIntervalRef.current = window.setInterval(() => { if (utteranceRef.current && !window.speechSynthesis.paused && !preciseSentenceEvents) { approximateParagraph = (approximateParagraph + 1) % Math.max(1, paragraphSentenceIndexes.length); setHighlight(paragraphSentenceIndexes[approximateParagraph] ?? 0); } }, Math.max(3200, 4800 / speed)); };
     utterance.onend = () => {
+      if (utteranceRef.current !== utterance) return;
       if (fallbackIntervalRef.current) window.clearInterval(fallbackIntervalRef.current); fallbackIntervalRef.current = undefined;
       utteranceRef.current = null; setSpeaking(false); setPaused(false); setHighlight(-1);
       if (allRef.current && slideIndex < story.slides.length - 1) { const next = slideIndex + 1; autoAdvanceRef.current = true; setIndex(next); window.setTimeout(() => speakAt(next, true), 100); }
       else if (allRef.current) { allRef.current = false; setReadAll(false); }
     };
-    utterance.onerror = () => { if (fallbackIntervalRef.current) window.clearInterval(fallbackIntervalRef.current); fallbackIntervalRef.current = undefined; setSpeaking(false); setPaused(false); setHighlight(-1); utteranceRef.current = null; };
+    utterance.onerror = () => { if (utteranceRef.current !== utterance) return; if (fallbackIntervalRef.current) window.clearInterval(fallbackIntervalRef.current); fallbackIntervalRef.current = undefined; setSpeaking(false); setPaused(false); setHighlight(-1); utteranceRef.current = null; if (allRef.current) { allRef.current = false; setReadAll(false); } };
     window.speechSynthesis.speak(utterance);
   }, [story, speed, voices, voiceName, audioTracks, cancel]);
   useEffect(() => { const handler = (e: KeyboardEvent) => { const t = e.target as HTMLElement | null; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return; if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'ArrowRight') setIndex(v => Math.min((story?.slides.length ?? 1) - 1, v + 1)); if (e.key === 'ArrowLeft') setIndex(v => Math.max(0, v - 1)); }; window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler); }, [story, location.state]);
@@ -241,7 +253,7 @@ function StoryReader() {
         </div><figure className="slide-visual"><SceneGraphic type={story.id === 'story-1' ? 'moon' : story.id === 'story-3' ? 'voyager' : story.id === 'story-5' ? 'ingenuity' : 'mars'}/><img className={slideArt.kind === 'diagram' ? 'reader-mission-image is-diagram' : 'reader-mission-image'} src={slideArt.src} alt={slideArt.alt} onError={e => { e.currentTarget.style.display = 'none'; }}/><span className="visual-fallback-label">{slideArt.kind === 'diagram' ? 'MISSION SYSTEM DIAGRAM' : slideArt.kind === 'poster' ? 'MISSION POSTER' : 'MISSION PHOTOGRAPH'}</span><figcaption><span>{slideArt.caption}</span>{slide.image || slideArt.alt}<br/><a href={slideArt.source} target="_blank" rel="noreferrer">Image source ↗</a></figcaption><a href={storyExhibit.source} target="_blank" rel="noreferrer">Mission source ↗</a></figure>
       </motion.article></AnimatePresence>
         <div className="reader-controls"><div className="reader-nav"><button className="control-button" disabled={index === 0} onClick={() => setIndex(v => Math.max(0, v - 1))} aria-label="Previous slide">← <span>Previous</span></button><span className="control-count">{String(index + 1).padStart(2, '0')} <i>/</i> {String(story.slides.length).padStart(2, '0')}</span><button className="control-button next" disabled={index === story.slides.length - 1} onClick={() => setIndex(v => Math.min(story.slides.length - 1, v + 1))} aria-label="Next slide"><span>Next</span> →</button></div>
-          <div className="narration-panel"><div className="narration-actions"><button className="listen-button" disabled={!speechSupported && !hasNarrationAudio} onClick={() => { if (speaking && !paused) { if (audioRef.current) audioRef.current.pause(); else window.speechSynthesis.pause(); setPaused(true); } else if (speaking && paused) { if (audioRef.current) void audioRef.current.play(); else window.speechSynthesis.resume(); setPaused(false); } else { setReadAll(true); speakAt(index, true); } }}>{speaking ? paused ? '▶ Resume' : 'Ⅱ Pause' : '▶ Read from this slide'}</button><button className="all-button" disabled={!speechSupported && !hasNarrationAudio} onClick={() => { cancel(); if (index === 0) { setReadAll(true); speakAt(0, true); } else { setIndex(0); window.setTimeout(() => { setReadAll(true); speakAt(0, true); }, 0); } }}>{readAll ? 'Story playing' : 'Listen to entire story'}</button><button className="all-button" disabled={!speechSupported && !hasNarrationAudio} onClick={() => speakAt(index, readAll)}>↻ Replay</button><button className="all-button" disabled={!speechSupported && !hasNarrationAudio || !speaking} onClick={cancel}>■ Stop</button></div>
+          <div className="narration-panel"><div className="narration-actions"><button className="listen-button" disabled={!speechSupported && !hasNarrationAudio} onClick={() => { if (speaking && !paused) { if (audioRef.current) audioRef.current.pause(); else window.speechSynthesis.pause(); setPaused(true); } else if (speaking && paused) { if (audioRef.current) void audioRef.current.play(); else window.speechSynthesis.resume(); setPaused(false); } else { setReadAll(true); speakAt(index, true); } }}>{speaking ? paused ? '▶ Resume' : 'Ⅱ Pause' : '▶ Read from this slide'}</button><button className={readAll ? 'all-button story-playing' : 'all-button'} aria-live="polite" disabled={!speechSupported && !hasNarrationAudio || readAll} onClick={() => { cancel(); if (index === 0) { setReadAll(true); speakAt(0, true); } else { setIndex(0); window.setTimeout(() => { setReadAll(true); speakAt(0, true); }, 0); } }}>{readAll ? '● Story playing' : 'Listen to entire story'}</button><button className="all-button" disabled={!speechSupported && !hasNarrationAudio} onClick={() => speakAt(index, readAll)}>↻ Replay slide</button><button className="all-button" disabled={!speechSupported && !hasNarrationAudio || !speaking} onClick={cancel}>■ Stop</button></div>
             <div className="narration-settings"><label>Voice {hasNarrationAudio ? <span>ElevenLabs / {narrationVoice || 'Narrator'}</span> : <select value={voiceName} onChange={e => { setVoiceName(e.target.value); if (speaking) cancel(); }}><option value="">System default</option>{voices.map(v => <option key={`${v.name}-${v.lang}`} value={v.name}>{v.name} · {v.lang}</option>)}</select>}</label><label>Speed <select value={speed} onChange={e => { const nextSpeed = Number(e.target.value); setSpeed(nextSpeed); if (audioRef.current) audioRef.current.playbackRate = nextSpeed; }}><option value="0.8">Slow</option><option value="1">Normal</option><option value="1.2">Fast</option></select></label><span className="caption-label">Text captions · approximate sentence highlight during narration</span></div></div>
         </div>
       </div>
