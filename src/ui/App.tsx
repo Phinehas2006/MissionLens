@@ -1,9 +1,9 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { Story } from '../types/mission';
-import { exhibits, scienceDetails, stories } from '../data/catalog';
+import { exhibits, stories } from '../data/catalog';
 
 const HardwareLab = lazy(() => import('../pages/HardwareLabPage').then(m => ({ default: m.HardwareLab })));
 
@@ -16,7 +16,7 @@ function Header() {
   return <header className="site-header"><Link to="/" className="brand" aria-label="MissionLens home"><span className="brand-mark">M<span>◦</span></span><span>MISSION<span className="brand-light">LENS</span></span></Link>
     <button className="menu-toggle" aria-expanded={open} aria-label="Toggle navigation" onClick={() => setOpen(v => !v)}><span/><span/></button>
     <nav className={open ? 'nav-links open' : 'nav-links'} aria-label="Main navigation">
-      <NavLink to="/stories">Stories</NavLink><NavLink to="/hardware">Hardware Lab</NavLink><NavLink to="/science">Science Lab</NavLink><NavLink to="/videos">Videos</NavLink>
+      <NavLink to="/stories">Stories</NavLink><NavLink to="/hardware">Hardware Lab</NavLink><NavLink to="/videos">Videos</NavLink>
       <Link className="nav-explore" to="/stories">Start exploring <span>↗</span></Link>
     </nav>
   </header>;
@@ -25,10 +25,10 @@ function Header() {
 function App() {
   const location = useLocation();
   const reduceMotion = useReducedMotion();
-  return <><Header/><main className="route-main"><AnimatePresence mode="wait"><motion.div key={location.pathname} initial={reduceMotion ? false : { opacity: 0, y: 9 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -5 }} transition={reduceMotion ? reduced : { duration: .22, ease: 'easeOut' }}>
+  return <><Header/><main className="route-main"><AnimatePresence mode="wait"><motion.div key={location.pathname} initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -5 }} transition={reduceMotion ? reduced : { duration: .2, ease: 'easeOut' }}>
     <Routes location={location}>
       <Route path="/" element={<Home/>}/><Route path="/stories" element={<Stories/>}/><Route path="/stories/:id/read" element={<StoryReader/>}/>
-      <Route path="/hardware" element={<Suspense fallback={<div className="section-shell loading-page">Loading the Hardware Lab…</div>}><HardwareLab/></Suspense>}/><Route path="/science" element={<ScienceLab/>}/><Route path="/videos" element={<Videos/>}/><Route path="*" element={<NotFound/>}/>
+      <Route path="/hardware" element={<Suspense fallback={<div className="section-shell loading-page">Loading the Hardware Lab…</div>}><HardwareLab/></Suspense>}/><Route path="/science" element={<Navigate to="/stories" replace/>}/><Route path="/videos" element={<Videos/>}/><Route path="*" element={<NotFound/>}/>
     </Routes></motion.div></AnimatePresence></main><Footer/></>;
 }
 
@@ -47,13 +47,12 @@ function Home() {
       <div className="hero-tint"/><div className="hero-grid"/>
       <div className="hero-content"><p className="eyebrow hero-eyebrow"><span className="signal-dot"/> A FIELD GUIDE TO THE EXTRAORDINARY</p><h1>Mission Lens<br/><em>"An archive of the machines that went first"</em></h1><p className="hero-copy">A rover, a lander, a spacecraft, a helicopter.<br className="desktop-break"/> Meet the machines that opened new worlds.</p>
         <div className="hero-actions"><Link className="button button-red" to="/stories">Explore the stories <span>↗</span></Link><Link className="button button-glass" to="/hardware">Enter Hardware Lab <span>↗</span></Link></div>
-        <Link to="/science" className="hero-science">Or start with the science <span>→</span></Link>
       </div><div className="hero-side"> <span></span></div>
       <div className="hero-bottom"><span>AN OPEN ARCHIVE OF HUMAN CURIOSITY</span><span>SCROLL TO EXPLORE ↓</span></div>
       <button className="video-toggle" onClick={toggle} aria-label={playing ? 'Pause background video' : 'Play background video'}>{playing ? 'Ⅱ' : '▶'} <span>{playing ? 'Pause motion' : 'Play motion'}</span></button>
     </section>
     <section className="home-intro section-shell"><div><p className="eyebrow">FIVE MACHINES · ONE BIG QUESTION</p><h2>What does it take<br/>to reach the unknown?</h2></div><p className="intro-copy">Every mission begins with a question. How far can we travel? What can a rock tell us? Can a helicopter fly on Mars? Meet the equipment that helped turn those questions into discoveries.</p></section>
-    <section className="home-paths section-shell"><PathCard n="01" title="The Stories" text="Follow five missions, one slide at a time." to="/stories" className="path-story"/><PathCard n="02" title="Hardware Lab" text="Rotate the explorers that went farther." to="/hardware" className="path-hardware"/><PathCard n="03" title="Science Lab" text="See how the instruments did their work." to="/science" className="path-science"/></section>
+    <section className="home-paths home-paths-two section-shell"><PathCard n="01" title="The Stories" text="Follow five missions, one slide at a time." to="/stories" className="path-story"/><PathCard n="02" title="Hardware Lab" text="Rotate the explorers that went farther." to="/hardware" className="path-hardware"/></section>
     <section className="featured-home section-shell"><div className="section-heading"><div><p className="eyebrow">THE ARCHIVE</p><h2>Small machines.<br/>Vast frontiers.</h2></div><Link className="text-link" to="/stories">View all stories ↗</Link></div><div className="featured-strip">{stories.slice(0, 3).map((s, i) => <StoryCard key={s.id} story={s} compact index={i}/>)}</div></section>
   </>;
 }
@@ -149,7 +148,7 @@ function StoryReader() {
     <div className="reader-top"><button className="back-button" onClick={close}>← <span>Back to Stories</span></button><span className="reader-series">MISSIONLENS STORY FILE <b>·</b> {story.equipment.toUpperCase()}</span><button onClick={close} className="close-reader" aria-label="Close story">× <span>Close</span></button></div>
     <div className="reader-progress"><span style={{ width: `${((index + 1) / story.slides.length) * 100}%` }}/></div>
     <div className="reader-workspace"><aside className="reader-rail"><p>STORY</p><strong>{story.title}</strong><div className="rail-separator"/><span>{story.destination.toUpperCase()}</span><span>{story.year}</span><div className="rail-counter">{String(index + 1).padStart(2, '0')}<i> / {String(story.slides.length).padStart(2, '0')}</i></div><Link to="/hardware" className="rail-link">Open this exhibit ↗</Link></aside>
-      <div className="reader-main"><AnimatePresence mode="wait"><motion.article key={`${story.id}-${index}`} className="reader-slide" initial={reduceMotion ? false : { opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -18 }} transition={reduceMotion ? reduced : { duration: .2 }}>
+      <div className="reader-main"><AnimatePresence mode="wait"><motion.article key={`${story.id}-${index}`} className="reader-slide" initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -5 }} transition={reduceMotion ? reduced : { duration: .2, ease: 'easeOut' }}>
         <div className="slide-copy"><p className="eyebrow">{story.equipment} <span>·</span> {String(slide.number).padStart(2, '0')} / {String(story.slides.length).padStart(2, '0')}</p><h1>{slide.title}</h1><div className="slide-text" aria-label="Story text">{sentenceSpans.map((item, i) => <span key={i} className={highlight === i ? 'spoken-sentence' : ''}>{item.text}</span>)}</div>
           {!speechSupported && <p className="speech-note">Speech narration is not available in this browser. The story text remains available to read.</p>}
         </div><figure className="slide-visual"><span className="visual-fallback-label">CONCEPT DIAGRAM · NO LOCAL MISSION PHOTO</span><SceneGraphic type={story.id === 'story-1' ? 'moon' : story.id === 'story-3' ? 'voyager' : story.id === 'story-5' ? 'ingenuity' : 'mars'}/><figcaption><span>ILLUSTRATION BRIEF</span>{slide.image || 'Concept diagram based on this mission.'}</figcaption><a href={storyExhibit.source} target="_blank" rel="noreferrer">Mission source ↗</a></figure>
@@ -164,14 +163,6 @@ function StoryReader() {
   </section>;
 }
 
-function ScienceLab() {
-  const [selected, setSelected] = useState(0);
-  const d = scienceDetails[selected]; const story = stories[selected];
-  return <section className="science-page section-shell"><PageIntro tag="SCIENCE LAB · FIVE IDEAS" title={<>The clever ideas<br/>behind the <em>missions.</em></>} copy="A closer look at the engineering and science that helped each explorer do its work. Start with a simple diagram, then follow the links to the full mission story."/>
-    <div className="science-layout"><div className="science-list" role="tablist" aria-label="Science topics">{scienceDetails.map((s, i) => <button key={s.icon} role="tab" aria-selected={selected === i} onClick={() => setSelected(i)}><span>{s.icon}</span><strong>{s.label}</strong><i>↗</i></button>)}</div><article className="science-detail"><p className="eyebrow">FIELD GUIDE / {d.icon}</p><h2>{d.label}</h2><p className="science-copy">{d.text}</p><div className="diagram-card"><span>THE IDEA, SIMPLIFIED</span><div className="diagram-flow">{d.diagram.split('→').map((step, i, a) => <div className="diagram-step" key={i}><span>{String(i + 1).padStart(2, '0')}</span><strong>{step.trim()}</strong>{i < a.length - 1 && <i>→</i>}</div>)}</div><small>Diagram is a simplified explanation, not to scale.</small></div><div className="science-source"><a href={d.source} target="_blank" rel="noreferrer">NASA mission source ↗</a><Link to={`/stories/${story.id}/read`}>Read “{story.title}” ↗</Link><Link to="/hardware">See the hardware ↗</Link></div></article></div>
-    <div className="science-next"><span>CONTINUE EXPLORING</span><Link to="/stories">Read the mission stories ↗</Link><Link to="/hardware">Visit Hardware Lab ↗</Link></div><Sources/></section>;
-}
-
 function Videos() {
   const videos = [
     { id: 'P4boyXQuUIw', title: 'Mission video 01', url: 'https://youtu.be/P4boyXQuUIw?si=Ovzip9muNIKb53Mi' },
@@ -183,6 +174,6 @@ function Videos() {
 function Sources() { return <details className="sources"><summary>Sources & asset notes</summary><div className="sources-list"><p>Mission facts and image descriptions are based on NASA mission pages linked from each story and exhibit.</p><p>Local 3D model files were supplied in the project folder. Their original authorship and reuse terms were not included with the files; source metadata is therefore marked unavailable on each model exhibit.</p><p>The landing video and lunar viewpoint video are supplied local project assets. No NASA logo or endorsement is implied.</p>{exhibits.map(e => <a key={e.storyId} href={e.source} target="_blank" rel="noreferrer">{e.sourceLabel} ↗</a>)}</div></details>; }
 function PageIntro({ tag, title, copy }: { tag: string; title: ReactNode; copy: string }) { return <div className="page-intro"><p className="eyebrow"><span className="signal-dot"/>{tag}</p><h1>{title}</h1><p>{copy}</p></div>; }
 function NotFound() { return <section className="not-found section-shell"><p className="eyebrow">SIGNAL LOST</p><h1>This page drifted<br/><em>off course.</em></h1><Link to="/" className="button button-blue">Return to MissionLens ↗</Link></section>; }
-function Footer() { return <footer className="site-footer"><Link to="/" className="brand"><span className="brand-mark">M<span>◦</span></span><span>MISSION<span className="brand-light">LENS</span></span></Link><p>Curiosity, carried farther.</p><div><Link to="/stories">Stories</Link><Link to="/hardware">Hardware Lab</Link><Link to="/science">Science Lab</Link><Link to="/videos">Videos</Link></div><small>AN INDEPENDENT EDUCATIONAL EXPERIENCE · NOT AFFILIATED WITH NASA</small></footer>; }
+function Footer() { return <footer className="site-footer"><Link to="/" className="brand"><span className="brand-mark">M<span>◦</span></span><span>MISSION<span className="brand-light">LENS</span></span></Link><p>Curiosity, carried farther.</p><div><Link to="/stories">Stories</Link><Link to="/hardware">Hardware Lab</Link><Link to="/videos">Videos</Link></div><small>AN INDEPENDENT EDUCATIONAL EXPERIENCE · NOT AFFILIATED WITH NASA</small></footer>; }
 
 export default App;

@@ -1,9 +1,9 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { Story } from '../types/mission';
-import { exhibits, scienceDetails, stories } from '../data/catalog';
+import { exhibits, stories } from '../data/catalog';
 
 const HardwareLab = lazy(() => import('../pages/HardwareLabPage').then(m => ({ default: m.HardwareLab })));
 
@@ -22,7 +22,7 @@ const archiveImages: ArchiveImage[] = [
   { src: '/assets/mission-archive/curiosity-system-diagram.webp', alt: 'Curiosity rover system diagram.', title: 'Curiosity · rover diagram', type: 'Mars exploration', kind: 'diagram' },
   { src: '/assets/mission-archive/grc-2011-c-00663-aircraft.jpg', alt: 'Aircraft image from the supplied NASA Glenn Research Center file.', title: 'NASA Glenn Research Center · aircraft image', type: 'Aerospace reference' },
   { src: '/assets/mission-archive/ingenuity-72-flights-poster.jpg', alt: 'Ingenuity Mars helicopter poster marking its 72 flights.', title: 'Ingenuity · 72 flights', type: 'Mars exploration', kind: 'poster' },
-  { src: '/assets/mission-archive/missionlens-logo-source.png', alt: 'Original supplied MissionLens logo artwork.', title: 'MissionLens · supplied logo artwork', type: 'Project identity', kind: 'logo' },
+
   { src: '/assets/mission-archive/pia00381-viking-first-image.jpg', alt: 'Viking 1’s first clear surface image from Mars.', title: 'Viking 1 · first surface image', type: 'Viking mission' },
   { src: '/assets/mission-archive/pia05180-opportunity-and-lander.jpg', alt: 'Opportunity rover beside its empty Mars lander.', title: 'Opportunity and its mother ship', type: 'Mars Exploration Rover' },
   { src: '/assets/mission-archive/pia23041-curiosity-and-apollo-16-rover.jpg', alt: 'Curiosity rover compared with an Apollo lunar rover.', title: 'Curiosity and Apollo 16 rover · scale comparison', type: 'Rover comparison' },
@@ -58,7 +58,7 @@ function Header() {
     <Link to="/" className="home-quick" aria-label="Go to the MissionLens landing page"><span aria-hidden="true">⌂</span><b>Home</b></Link>
     <button className="menu-toggle" aria-expanded={open} aria-label="Toggle navigation" onClick={() => setOpen(v => !v)}><span/><span/></button>
     <nav className={open ? 'nav-links open' : 'nav-links'} aria-label="Main navigation">
-      <NavLink to="/about">About</NavLink><NavLink to="/stories">Stories</NavLink><NavLink to="/hardware">Hardware Lab</NavLink><NavLink to="/science">Science Lab</NavLink><NavLink to="/videos">Video</NavLink>
+      <NavLink to="/about">About</NavLink><NavLink to="/stories">Stories</NavLink><NavLink to="/hardware">Hardware Lab</NavLink><NavLink to="/videos">Video</NavLink>
     </nav>
   </header>;
 }
@@ -68,10 +68,10 @@ function App() {
   const reduceMotion = useReducedMotion();
   const isHome = location.pathname === '/';
   useEffect(() => { if (isHome) window.scrollTo(0, 0); }, [isHome]);
-  return <><Header/><main className={isHome ? 'route-main home-route' : 'route-main'}><AnimatePresence mode="wait"><motion.div key={location.pathname} initial={reduceMotion ? false : { opacity: 0, y: 9 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -5 }} transition={reduceMotion ? reduced : { duration: .22, ease: 'easeOut' }}>
+  return <><Header/><main className={isHome ? 'route-main home-route' : 'route-main'}><AnimatePresence mode="wait"><motion.div key={location.pathname} initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -5 }} transition={reduceMotion ? reduced : { duration: .2, ease: 'easeOut' }}>
     <Routes location={location}>
       <Route path="/" element={<Home/>}/><Route path="/stories" element={<Stories/>}/><Route path="/stories/:id/read" element={<StoryReader/>}/><Route path="/about" element={<About/>}/>
-      <Route path="/hardware" element={<Suspense fallback={<div className="section-shell loading-page">Loading the Hardware Lab…</div>}><HardwareLab/></Suspense>}/><Route path="/science" element={<ScienceLab/>}/><Route path="/videos" element={<Videos/>}/><Route path="*" element={<NotFound/>}/>
+      <Route path="/hardware" element={<Suspense fallback={<div className="section-shell loading-page">Loading the Hardware Lab…</div>}><HardwareLab/></Suspense>}/><Route path="/science" element={<Navigate to="/stories" replace/>}/><Route path="/videos" element={<Videos/>}/><Route path="*" element={<NotFound/>}/>
     </Routes></motion.div></AnimatePresence></main>{!isHome && <Footer/>}</>;
 }
 
@@ -89,7 +89,6 @@ function Home() {
       <div className="hero-tint"/><div className="hero-grid"/>
       <div className="hero-content"><p className="eyebrow hero-eyebrow"><span className="signal-dot"/> A FIELD GUIDE TO THE EXTRAORDINARY</p><h1>MissionLens</h1><p className="hero-tagline">An archive of the machines that went first.</p><p className="hero-copy">A rover, a lander, a spacecraft, a helicopter.<br className="desktop-break"/> Meet the machines that opened new worlds.</p>
         <div className="hero-actions"><Link className="button button-red" to="/stories">Explore the stories <span>↗</span></Link><Link className="button button-glass" to="/hardware">Enter Hardware Lab <span>↗</span></Link></div>
-        <Link to="/science" className="hero-science">Or start with the science <span>→</span></Link>
       </div><div className="hero-side"> <span></span></div>
       <div className="hero-bottom"><span>AN OPEN ARCHIVE OF HUMAN CURIOSITY</span><span>SELECT A DESTINATION TO EXPLORE ↓</span></div>
       <button className="video-toggle" onClick={toggle} aria-label={playing ? 'Pause background video' : 'Play background video'}>{playing ? 'Ⅱ' : '▶'} <span>{playing ? 'Pause motion' : 'Play motion'}</span></button>
@@ -106,14 +105,14 @@ function About() {
   ];
   return <section className="about-page section-shell"><PageIntro tag="ABOUT MISSIONLENS · WHY WE LOOK CLOSER" title={<>About<br/><em>MissionLens.</em></>} copy="An independent learning archive about the machines that helped us explore the Moon, Mars, and deep space."/>
     <div className="about-lead"><span>OUR IDEA</span><p>Space exploration is made of bold questions and carefully built machines. MissionLens follows the equipment behind five missions to show what it did, how it worked, and what its journey helped us learn.</p></div>
-    <div className="about-columns"><article><span>01 / THE STORIES</span><h2>Start with the machine.</h2><p>A lunar rover, a Mars lander, a deep-space probe, a long-running rover, and a helicopter each open a different window on exploration. Short, illustrated story slides make their journeys easy to follow while keeping the science and mission details in view.</p></article><article><span>02 / THE SCIENCE</span><h2>Follow the question.</h2><p>Every instrument is built to do a job. MissionLens connects the hardware to the questions scientists asked: how to travel farther on the Moon, what Martian soil can reveal, and whether powered flight can work on another world.</p></article><article><span>03 / THE EXHIBITS</span><h2>Look around.</h2><p>The Hardware Lab lets visitors inspect supplied 3D models and labeled parts. The Science Lab breaks down key ideas with simple diagrams. Mission videos and source links give curious readers a path to keep exploring.</p></article></div>
+    <div className="about-columns"><article><span>01 / THE STORIES</span><h2>Start with the machine.</h2><p>A lunar rover, a Mars lander, a deep-space probe, a long-running rover, and a helicopter each open a different window on exploration. Short, illustrated story slides make their journeys easy to follow while keeping the science and mission details in view.</p></article><article><span>02 / THE QUESTIONS</span><h2>Follow the evidence.</h2><p>Every instrument is built to do a job. MissionLens connects the hardware to the questions scientists asked: how to travel farther on the Moon, what Martian soil can reveal, and whether powered flight can work on another world.</p></article><article><span>03 / THE EXHIBITS</span><h2>Look around.</h2><p>The Hardware Lab lets visitors inspect supplied 3D models and labeled parts. Mission videos and source links give curious readers a path to keep exploring.</p></article></div>
     <div className="about-timeline"><div className="about-timeline-head"><span>FIVE MISSION FILES</span><h2>One archive.<br/><em>Many frontiers.</em></h2></div><div className="timeline-list">{milestones.map(([year, name, note], i) => <div className="timeline-row" key={name}><span className="timeline-number">0{i + 1}</span><span className="timeline-year">{year}</span><div><h3>{name}</h3><p>{note}</p></div></div>)}</div></div>
-    <div className="about-note"><span>OUR SOURCES</span><p>MissionLens is designed to make exploration inviting without losing sight of evidence. Mission references are linked throughout the site. Illustrative diagrams are labeled, and locally supplied 3D models are identified as such when their original credits were not included.</p><Link to="/stories" className="button button-blue">Explore the stories ↗</Link><Link to="/science" className="about-secondary-link">Visit the Science Lab →</Link></div>
+    <div className="about-note"><span>OUR SOURCES</span><p>MissionLens is designed to make exploration inviting without losing sight of evidence. Mission references are linked throughout the site. Illustrative diagrams are labeled, and locally supplied 3D models are identified as such when their original credits were not included.</p><Link to="/stories" className="button button-blue">Explore the stories ↗</Link></div>
   </section>;
 }
 
 function ImageArchive() {
-  return <section className="image-archive" aria-labelledby="image-archive-title"><div className="image-archive-heading"><p className="eyebrow">SUPPLIED PROJECT IMAGES · 17 FILES</p><h2 id="image-archive-title">The wider image archive.</h2><p>Explore every visual supplied in the images folder. Mission slides above use the images that match their subject; additional references are kept here with their own labels.</p></div><div className="image-archive-grid">{archiveImages.map(image => <figure className="image-archive-card" key={image.src}><div className={`image-archive-frame ${image.kind === 'diagram' ? 'is-diagram' : ''} ${image.kind === 'logo' ? 'is-logo' : ''}`}><img src={image.src} alt={image.alt} loading="lazy"/></div><figcaption><span>{image.type}</span><strong>{image.title}</strong></figcaption></figure>)}</div></section>;
+  return <section className="image-archive" aria-labelledby="image-archive-title"><div className="image-archive-heading"><p className="eyebrow">SUPPLIED PROJECT IMAGES · 16 FILES</p><h2 id="image-archive-title">The wider image archive.</h2><p>Explore selected visuals supplied in the images folder. Mission slides above use the images that match their subject; additional references are kept here with their own labels.</p></div><div className="image-archive-grid">{archiveImages.map(image => <figure className="image-archive-card" key={image.src}><div className={`image-archive-frame ${image.kind === 'diagram' ? 'is-diagram' : ''} ${image.kind === 'logo' ? 'is-logo' : ''}`}><img src={image.src} alt={image.alt} loading="lazy"/></div><figcaption><span>{image.type}</span><strong>{image.title}</strong></figcaption></figure>)}</div></section>;
 }
 
 function Stories() {
@@ -247,7 +246,7 @@ function StoryReader() {
     <div className="reader-top"><button className="back-button" onClick={close}>← <span>Back to Stories</span></button><span className="reader-series">MISSIONLENS STORY FILE <b>·</b> {story.equipment.toUpperCase()}</span><button onClick={close} className="close-reader" aria-label="Close story">× <span>Close</span></button></div>
     <div className="reader-progress"><span style={{ width: `${((index + 1) / story.slides.length) * 100}%` }}/></div>
     <div className="reader-workspace"><aside className="reader-rail"><p>STORY</p><strong>{story.title}</strong><div className="rail-separator"/><span>{story.destination.toUpperCase()}</span><span>{story.year}</span><div className="rail-counter">{String(index + 1).padStart(2, '0')}<i> / {String(story.slides.length).padStart(2, '0')}</i></div><Link to="/hardware" className="rail-link">Open this exhibit ↗</Link></aside>
-      <div className="reader-main"><AnimatePresence mode="wait"><motion.article key={`${story.id}-${index}`} className="reader-slide" initial={reduceMotion ? false : { opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -18 }} transition={reduceMotion ? reduced : { duration: .2 }}>
+      <div className="reader-main"><AnimatePresence mode="wait"><motion.article key={`${story.id}-${index}`} className="reader-slide" initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -5 }} transition={reduceMotion ? reduced : { duration: .2, ease: 'easeOut' }}>
         <div className="slide-copy"><p className="eyebrow">{story.equipment} <span>·</span> {String(slide.number).padStart(2, '0')} / {String(story.slides.length).padStart(2, '0')}</p><h1>{slide.title}</h1><div className="slide-text" aria-label="Story text">{sentenceSpans.map((item, i) => <span key={i} className={highlight === i ? 'spoken-sentence' : ''}>{item.text}</span>)}</div>
           {!speechSupported && !hasNarrationAudio && <p className="speech-note">Narration is not available in this browser yet. The story text remains available to read.</p>}
         </div><figure className="slide-visual"><SceneGraphic type={story.id === 'story-1' ? 'moon' : story.id === 'story-3' ? 'voyager' : story.id === 'story-5' ? 'ingenuity' : 'mars'}/><img className={slideArt.kind === 'diagram' ? 'reader-mission-image is-diagram' : 'reader-mission-image'} src={slideArt.src} alt={slideArt.alt} onError={e => { e.currentTarget.style.display = 'none'; }}/><span className="visual-fallback-label">{slideArt.kind === 'diagram' ? 'MISSION SYSTEM DIAGRAM' : slideArt.kind === 'poster' ? 'MISSION POSTER' : 'MISSION PHOTOGRAPH'}</span><figcaption><span>{slideArt.caption}</span>{slide.image || slideArt.alt}<br/><a href={slideArt.source} target="_blank" rel="noreferrer">Image source ↗</a></figcaption><a href={storyExhibit.source} target="_blank" rel="noreferrer">Mission source ↗</a></figure>
@@ -262,29 +261,23 @@ function StoryReader() {
   </section>;
 }
 
-function ScienceLab() {
-  const [selected, setSelected] = useState(0);
-  const d = scienceDetails[selected]; const story = stories[selected];
-  return <section className="science-page section-shell"><PageIntro tag="SCIENCE LAB · FIVE IDEAS" title={<>The clever ideas<br/>behind the <em>missions.</em></>} copy="A closer look at the engineering and science that helped each explorer do its work. Start with a simple diagram, then follow the links to the full mission story."/>
-    <div className="science-layout"><div className="science-list" role="tablist" aria-label="Science topics">{scienceDetails.map((s, i) => <button key={s.icon} role="tab" aria-selected={selected === i} onClick={() => setSelected(i)}><span>{s.icon}</span><strong>{s.label}</strong><i>↗</i></button>)}</div><article className="science-detail"><p className="eyebrow">FIELD GUIDE / {d.icon}</p><h2>{d.label}</h2><p className="science-copy">{d.text}</p><div className="diagram-card"><span>THE IDEA, SIMPLIFIED</span><div className="diagram-flow">{d.diagram.split('→').map((step, i, a) => <div className="diagram-step" key={i}><span>{String(i + 1).padStart(2, '0')}</span><strong>{step.trim()}</strong>{i < a.length - 1 && <i>→</i>}</div>)}</div><small>Diagram is a simplified explanation, not to scale.</small></div><div className="science-source"><a href={d.source} target="_blank" rel="noreferrer">NASA mission source ↗</a><Link to={`/stories/${story.id}/read`}>Read “{story.title}” ↗</Link><Link to="/hardware">See the hardware ↗</Link></div></article></div>
-    <div className="science-next"><span>CONTINUE EXPLORING</span><Link to="/stories">Read the mission stories ↗</Link><Link to="/hardware">Visit Hardware Lab ↗</Link></div><Sources/></section>;
-}
-
 function Videos() {
   const videos = [
     { id: 'P4boyXQuUIw', title: 'Mission video 01', url: 'https://youtu.be/P4boyXQuUIw?si=Ovzip9muNIKb53Mi' },
     { id: 'iIJcqiqYXG8', title: 'Mission video 02', url: 'https://youtu.be/iIJcqiqYXG8?si=6MTfjrPBB_5Ux9MG' },
+    { id: 'EbCNU6aCDuM', title: 'Mission video 03', url: 'https://www.youtube.com/watch?v=EbCNU6aCDuM' },
+    { id: 'yC-6LuHos8s', title: 'Mission video 04', url: 'https://youtu.be/yC-6LuHos8s?si=Q3LxxDVJMQcbKAKa' },
   ];
   const localVideos = [
     { title: 'Lunar surface, first-person view', description: 'Explore a supplied first-person view across the lunar surface.', src: '/videos/lunar-trek-first-person-view.mp4' },
     { title: 'Lunar Trek, third-person view', description: 'See the lunar exploration scene from a third-person perspective.', src: '/videos/lunar-trek-third-person-view.mp4' },
   ];
-  return <section className="videos-page section-shell"><PageIntro tag="WATCH · 04 VIDEOS" title={<>See the mission<br/><em>in motion.</em></>} copy="Watch mission videos and explore first- and third-person lunar surface views from the project collection. Videos start only when you press play."/><div className="video-grid">{videos.map(v => <article key={v.id} className="video-card"><div className="video-frame"><iframe src={`https://www.youtube-nocookie.com/embed/${v.id}`} title={v.title} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen/><noscript><a href={v.url}>Watch on YouTube</a></noscript></div><div className="video-caption"><span>VIDEO FILE / {v.id}</span><h3>{v.title}</h3><a href={v.url} target="_blank" rel="noreferrer">Watch on YouTube ↗</a></div></article>)}</div>{localVideos.map(video => <article key={video.src} className="local-video-card"><div className="local-video-title"><span>LOCAL VIDEO · PROJECT ASSET</span><h2>{video.title}</h2><p>{video.description}</p></div><video controls preload="metadata" playsInline src={video.src}>Your browser does not support this video. You can still explore the stories and labs.</video></article>)}</section>;
+  return <section className="videos-page section-shell"><PageIntro tag="WATCH · 06 VIDEOS" title={<>See the mission<br/><em>in motion.</em></>} copy="Watch mission videos and explore first- and third-person lunar surface views from the project collection. Videos start only when you press play."/><div className="video-grid">{videos.map(v => <article key={v.id} className="video-card"><div className="video-frame"><iframe src={`https://www.youtube-nocookie.com/embed/${v.id}`} title={v.title} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen/><noscript><a href={v.url}>Watch on YouTube</a></noscript></div><div className="video-caption"><span>VIDEO FILE / {v.id}</span><h3>{v.title}</h3><a href={v.url} target="_blank" rel="noreferrer">Watch on YouTube ↗</a></div></article>)}</div>{localVideos.map(video => <article key={video.src} className="local-video-card"><div className="local-video-title"><span>LOCAL VIDEO · PROJECT ASSET</span><h2>{video.title}</h2><p>{video.description}</p></div><video controls preload="metadata" playsInline src={video.src}>Your browser does not support this video. You can still explore the stories and labs.</video></article>)}</section>;
 }
 
 function Sources() { return <details className="sources"><summary>Sources & asset notes</summary><div className="sources-list"><p>Mission facts and image descriptions are based on NASA mission pages linked from each story and exhibit.</p><p>Local 3D model files were supplied in the project folder. Their original authorship and reuse terms were not included with the files; source metadata is therefore marked unavailable on each model exhibit.</p><p>The landing video and lunar viewpoint video are supplied local project assets. No NASA logo or endorsement is implied.</p>{exhibits.map(e => <a key={e.storyId} href={e.source} target="_blank" rel="noreferrer">{e.sourceLabel} ↗</a>)}</div></details>; }
 function PageIntro({ tag, title, copy }: { tag: string; title: ReactNode; copy: string }) { return <div className="page-intro"><p className="eyebrow"><span className="signal-dot"/>{tag}</p><h1>{title}</h1><p>{copy}</p></div>; }
 function NotFound() { return <section className="not-found section-shell"><p className="eyebrow">SIGNAL LOST</p><h1>This page drifted<br/><em>off course.</em></h1><Link to="/" className="button button-blue">Return to MissionLens ↗</Link></section>; }
-function Footer() { return <footer className="site-footer"><Link to="/" className="brand" aria-label="MissionLens home"><BrandLogo/></Link><p>Curiosity, carried farther.</p><div><Link to="/stories">Stories</Link><Link to="/hardware">Hardware Lab</Link><Link to="/science">Science Lab</Link><Link to="/videos">Videos</Link><Link to="/about">About</Link></div><small>AN INDEPENDENT EDUCATIONAL EXPERIENCE · NOT AFFILIATED WITH NASA</small></footer>; }
+function Footer() { return <footer className="site-footer"><Link to="/" className="brand" aria-label="MissionLens home"><BrandLogo/></Link><p>Curiosity, carried farther.</p><div><Link to="/stories">Stories</Link><Link to="/hardware">Hardware Lab</Link><Link to="/videos">Videos</Link><Link to="/about">About</Link></div><small>AN INDEPENDENT EDUCATIONAL EXPERIENCE · NOT AFFILIATED WITH NASA</small></footer>; }
 
 export default App;

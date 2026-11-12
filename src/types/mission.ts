@@ -2,6 +2,6 @@ export type StorySlide = { number: number; title: string; paragraphs: string[]; 
 export type Story = { id: string; title: string; equipment: string; year: string; destination: string; slides: StorySlide[] };
 export type Exhibit = {
   storyId: string; title: string; year: string; destination: string; intro: string;
-  model?: string; modelLabel?: string; fallback?: boolean; facts: { label: string; detail: string; x: number; y: number }[];
+  model?: string; modelLabel?: string; fallback?: boolean; facts: { label: string; detail: string; x: number; y: number; modelTargets?: { node: string; material?: string }[] }[];
   science: string; source: string; sourceLabel: string;
 };

@@ -23,3 +23,17 @@
 .home-route .hero{height:100%;min-height:0;max-height:none}
 @media(max-width:900px){.home-route{height:calc(100svh - 68px)}}
 .all-button.story-playing:disabled{opacity:1;background:#e8f7ed;border-color:#a1d8b2;color:#216b3a;font-weight:600;cursor:default}
+
+/* Hardware part selection stays attached to the model while its explanation stays in the adjacent information column. */
+.part-availability{font-size:10px;line-height:1.65;color:#6a7c91;margin:0;padding:11px 13px;border-top:1px solid #e4ebf2;background:#f8fbff}
+.part-button{transition:background-color .16s ease,border-color .16s ease,color .16s ease}
+.part-button:hover{background:#f2f7fc;border-color:#b7cbe0;color:var(--navy)}
+.part-button:focus-visible,.label-toggle:focus-visible,.part-detail>button:focus-visible,.reset-view:focus-visible{outline:3px solid #4b9be6;outline-offset:2px}
+.model-callout-pin{position:relative;display:grid;place-items:center;width:25px;height:25px;border:2px solid #092244;border-radius:50%;background:#fff;color:#092244;font:700 9px var(--mono);box-shadow:0 1px 5px #001a3855;transform:translateY(-50%)}
+.model-callout-pin:after{content:"";position:absolute;left:50%;top:100%;height:15px;border-left:2px solid #092244;transform:translateX(-50%)}
+.part-detail{animation:part-panel-in .18s ease-out both}
+@keyframes part-panel-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@media(min-width:701px) and (max-width:1000px){.exhibit-layout{grid-template-columns:minmax(0,1fr) minmax(235px,.78fr);gap:20px}.model-canvas,.illustrated-stage{height:370px}}
+@media(max-width:700px){.exhibit-layout{grid-template-columns:minmax(0,1fr)}.exhibit-info{padding:8px 0 18px}.model-canvas,.illustrated-stage{height:350px}}
+@media(prefers-reduced-motion:reduce){.part-button,.part-detail{transition:none;animation:none}}
+.home-paths-two{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:620px){.home-paths-two{grid-template-columns:minmax(0,1fr)}}
