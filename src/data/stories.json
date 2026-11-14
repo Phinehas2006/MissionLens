@@ -10,13 +10,12 @@
         "number": 1,
         "title": "A Car on the Moon?!",
         "paragraphs": [
-          "Your boots crunch against the grey lunar dust.",
-          "Ahead, giant craters scar the ground. Strange rocks lie scattered everywhere, and distant mountains rise beneath a pitch-black sky.",
-          "You're on the Moon! There's so much to explore, but walking in a bulky spacesuit is hard work.",
-          "Wouldn't a car make things easier?",
-          "Well, NASA had the same idea!",
-          "In 1971, astronauts took something extraordinary to the Moon: a little electric car!",
-          "It was called the Lunar Roving Vehicle, or Moon buggy."
+          "Picture stepping onto the Moon.",
+          "You step outside your spaceship. You look left. You look right. There are rocks, hills, and endless grey dust.",
+          "You want to explore everything!",
+          "But there's one little problem.",
+          "Your legs can only carry you so far.",
+          "What if you had a car?"
         ],
         "image": "Apollo astronaut standing beside the lunar rover."
       },
