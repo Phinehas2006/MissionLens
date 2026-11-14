@@ -4,7 +4,10 @@ import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, usePa
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { Story } from '../types/mission';
 import { exhibits, stories } from '../data/catalog';
-import { artworkForSlide } from '../data/story-artwork';
+import { artworkForLocale } from '../data/story-artwork';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { frenchStories } from '../data/stories.fr';
+import { storyPdfs } from 'virtual:mission-pdfs';
 
 const HardwareLab = lazy(() => import('../pages/HardwareLabPage').then(m => ({ default: m.HardwareLab })));
 
@@ -32,31 +35,35 @@ const archiveImages: ArchiveImage[] = [
 function BrandLogo() { return <img className="brand-logo" src="/assets/missionlens-logo.png" alt="MissionLens"/>; }
 
 function Header() {
+  const { locale, setLocale, t } = useLanguage();
   const [open, setOpen] = useState(false);
   const location = useLocation();
   useEffect(() => setOpen(false), [location.pathname]);
-  return <header className="site-header"><Link to="/" className="brand" aria-label="MissionLens home"><BrandLogo/></Link>
-    <Link to="/" className="home-quick" aria-label="Go to the MissionLens landing page"><span aria-hidden="true">⌂</span><b>Home</b></Link>
-    <button className="menu-toggle" aria-expanded={open} aria-label="Toggle navigation" onClick={() => setOpen(v => !v)}><span/><span/></button>
-    <nav className={open ? 'nav-links open' : 'nav-links'} aria-label="Main navigation">
-      <NavLink to="/about">About</NavLink><NavLink to="/stories">Stories</NavLink><NavLink to="/hardware">Hardware Lab</NavLink><NavLink to="/videos">Videos</NavLink>
+  return <header className="site-header"><Link to="/" className="brand" aria-label={t('MissionLens home')}><BrandLogo/></Link>
+    <Link to="/" className="home-quick" aria-label={t('Go to the MissionLens landing page')}><span aria-hidden="true">⌂</span><b>{t('Home')}</b></Link>
+    <button className="menu-toggle" aria-expanded={open} aria-label={t('Toggle navigation')} onClick={() => setOpen(v => !v)}><span/><span/></button>
+    <nav className={open ? 'nav-links open' : 'nav-links'} aria-label={t('Main navigation')}>
+      <NavLink to="/about">{t('About')}</NavLink><NavLink to="/stories">{t('Stories')}</NavLink><NavLink to="/hardware">{t('Hardware Lab')}</NavLink><NavLink to="/videos">{t('Videos')}</NavLink>
+      <label className="language-switch"><select aria-label={t('Language')} value={locale} onChange={e => setLocale(e.target.value as 'en' | 'fr')}><option value="en">English</option><option value="fr">Français</option></select></label>
     </nav>
   </header>;
 }
 
 function App() {
   const location = useLocation();
+  const { t } = useLanguage();
   const reduceMotion = useReducedMotion();
   const isHome = location.pathname === '/';
   useEffect(() => { if (isHome) window.scrollTo(0, 0); }, [isHome]);
   return <><Header/><main className={isHome ? 'route-main home-route' : 'route-main'}><AnimatePresence mode="wait"><motion.div key={location.pathname} initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -5 }} transition={reduceMotion ? reduced : { duration: .2, ease: 'easeOut' }}>
     <Routes location={location}>
       <Route path="/" element={<Home/>}/><Route path="/stories" element={<Stories/>}/><Route path="/stories/:id/read" element={<StoryReader/>}/><Route path="/about" element={<About/>}/>
-      <Route path="/hardware" element={<Suspense fallback={<div className="section-shell loading-page">Loading the Hardware Lab…</div>}><HardwareLab/></Suspense>}/><Route path="/science" element={<Navigate to="/stories" replace/>}/><Route path="/videos" element={<Videos/>}/><Route path="*" element={<NotFound/>}/>
+      <Route path="/hardware" element={<Suspense fallback={<div className="section-shell loading-page">{t('Loading the Hardware Lab…')}</div>}><HardwareLab/></Suspense>}/><Route path="/science" element={<Navigate to="/stories" replace/>}/><Route path="/videos" element={<Videos/>}/><Route path="*" element={<NotFound/>}/>
     </Routes></motion.div></AnimatePresence></main>{!isHome && <Footer/>}</>;
 }
 
 function Home() {
+  const { t } = useLanguage();
   const [playing, setPlaying] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const reduceMotion = useReducedMotion();
@@ -68,15 +75,16 @@ function Home() {
   return <section className="hero">
       <video ref={videoRef} className="hero-video" src="/videos/landing-page-background.mp4" autoPlay={!reduceMotion} preload="auto" muted loop playsInline onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} aria-hidden="true"/>
       <div className="hero-tint"/><div className="hero-grid"/>
-      <div className="hero-content"><p className="eyebrow hero-eyebrow"><span className="signal-dot"/> A FIELD GUIDE TO THE EXTRAORDINARY</p><h1>MissionLens</h1><p className="hero-tagline">An archive of the machines that went first.</p><p className="hero-copy">A lunar rover, Viking 1, Voyager 1, Opportunity, Ingenuity.<br className="desktop-break"/> Five machines. New worlds to explore.</p>
-        <div className="hero-actions"><Link className="button button-red" to="/stories">Explore the stories <span>↗</span></Link><Link className="button button-glass" to="/hardware">Enter Hardware Lab <span>↗</span></Link></div>
+      <div className="hero-content"><p className="eyebrow hero-eyebrow"><span className="signal-dot"/> {t('A FIELD GUIDE TO THE EXTRAORDINARY')}</p><h1>MissionLens</h1><p className="hero-tagline">{t('An archive of the machines that went first.')}</p><p className="hero-copy">{t('A lunar rover, Viking 1, Voyager 1, Opportunity, Ingenuity.')}<br className="desktop-break"/> {t('Five machines. New worlds to explore.')}</p>
+        <div className="hero-actions"><Link className="button button-red" to="/stories">{t('Explore the stories')} <span>↗</span></Link><Link className="button button-glass" to="/hardware">{t('Enter Hardware Lab')} <span>↗</span></Link></div>
       </div><div className="hero-side"> <span></span></div>
-      <div className="hero-bottom"><span>AN OPEN ARCHIVE OF HUMAN CURIOSITY</span><span>SELECT A DESTINATION TO EXPLORE ↓</span></div>
-      <button className="video-toggle" onClick={toggle} aria-label={playing ? 'Pause background video' : 'Play background video'}>{playing ? 'Ⅱ' : '▶'} <span>{playing ? 'Pause motion' : 'Play motion'}</span></button>
+      <div className="hero-bottom"><span>{t('AN OPEN ARCHIVE OF HUMAN CURIOSITY')}</span><span>{t('SELECT A DESTINATION TO EXPLORE ↓')}</span></div>
+      <button className="video-toggle" onClick={toggle} aria-label={t(playing ? 'Pause background video' : 'Play background video')}>{playing ? 'Ⅱ' : '▶'} <span>{t(playing ? 'Pause motion' : 'Play motion')}</span></button>
   </section>;
 }
 
 function About() {
+  const { t } = useLanguage();
   const milestones = [
     ['1971', 'Lunar Roving Vehicle', 'The first Apollo mission to use a lunar rover.'],
     ['1976', 'Viking 1', 'A lander brought cameras and life-search experiments to Mars.'],
@@ -84,34 +92,38 @@ function About() {
     ['2004–2018', 'Opportunity', 'A solar-powered rover explored Mars for nearly fifteen years.'],
     ['2021–2024', 'Ingenuity', 'A small helicopter demonstrated powered flight on Mars.'],
   ];
-  return <section className="about-page section-shell"><PageIntro tag="ABOUT MISSIONLENS · WHY WE LOOK CLOSER" title={<>About<br/><em>MissionLens.</em></>} copy="An independent learning archive about the machines that helped us explore the Moon, Mars, and deep space."/>
-    <div className="about-lead"><span>OUR IDEA</span><p>MissionLens is an interactive storytelling archive about remarkable space exploration hardware, the engineering behind it, the missions it flew, and the science it made possible..</p></div>
-    <div className="about-columns"><article><span>01 / THE STORIES</span><h2>Start with the machine.</h2><p>A lunar rover, a Mars lander, a deep-space probe, a long-running rover, and a helicopter each open a different window on exploration. Short, illustrated story slides make their journeys easy to follow while keeping the science and mission details in view.</p></article><article><span>02 / THE QUESTIONS</span><h2>Follow the evidence.</h2><p>Every instrument is built to do a job. MissionLens connects the hardware to the questions scientists asked: how to travel farther on the Moon, what Martian soil can reveal, and whether powered flight can work on another world.</p></article><article><span>03 / THE EXHIBITS</span><h2>Look around.</h2><p>The Hardware Lab lets visitors inspect supplied 3D models and labeled parts. Mission videos and source links give curious readers a path to keep exploring.</p></article></div>
-    <div className="about-timeline"><div className="about-timeline-head"><span>FIVE MISSION FILES</span><h2>One archive.<br/><em>Many frontiers.</em></h2></div><div className="timeline-list">{milestones.map(([year, name, note], i) => <div className="timeline-row" key={name}><span className="timeline-number">0{i + 1}</span><span className="timeline-year">{year}</span><div><h3>{name}</h3><p>{note}</p></div></div>)}</div></div>
-    <div className="about-note"><span>OUR SOURCES</span><p>MissionLens is designed to make exploration inviting without losing sight of evidence. Mission references are linked throughout the site. Illustrative diagrams are labeled, and locally supplied 3D models are identified as such when their original credits were not included.</p><Link to="/stories" className="button button-blue">Explore the stories ↗</Link></div>
+  return <section className="about-page section-shell"><PageIntro tag={t('ABOUT MISSIONLENS · WHY WE LOOK CLOSER')} title={<>{t('About')}<br/><em>MissionLens.</em></>} copy={t('An independent learning archive about the machines that helped us explore the Moon, Mars, and deep space.')}/>
+    <div className="about-lead"><span>{t('OUR IDEA')}</span><p>{t('MissionLens is an interactive storytelling archive about remarkable space exploration hardware, the engineering behind it, the missions it flew, and the science it made possible..')}</p></div>
+    <div className="about-columns"><article><span>{t('01 / THE STORIES')}</span><h2>{t('Start with the machine.')}</h2><p>{t('A lunar rover, a Mars lander, a deep-space probe, a long-running rover, and a helicopter each open a different window on exploration. Short, illustrated story slides make their journeys easy to follow while keeping the science and mission details in view.')}</p></article><article><span>{t('02 / THE QUESTIONS')}</span><h2>{t('Follow the evidence.')}</h2><p>{t('Every instrument is built to do a job. MissionLens connects the hardware to the questions scientists asked: how to travel farther on the Moon, what Martian soil can reveal, and whether powered flight can work on another world.')}</p></article><article><span>{t('03 / THE EXHIBITS')}</span><h2>{t('Look around.')}</h2><p>{t('The Hardware Lab lets visitors inspect supplied 3D models and labeled parts. Mission videos and source links give curious readers a path to keep exploring.')}</p></article></div>
+    <div className="about-timeline"><div className="about-timeline-head"><span>{t('FIVE MISSION FILES')}</span><h2>{t('One archive.')}<br/><em>{t('Many frontiers.')}</em></h2></div><div className="timeline-list">{milestones.map(([year, name, note], i) => <div className="timeline-row" key={name}><span className="timeline-number">0{i + 1}</span><span className="timeline-year">{year}</span><div><h3>{name}</h3><p>{t(note)}</p></div></div>)}</div></div>
+    <div className="about-note"><span>{t('OUR SOURCES')}</span><p>{t('MissionLens is designed to make exploration inviting without losing sight of evidence. Mission references are linked throughout the site. Illustrative diagrams are labeled, and locally supplied 3D models are identified as such when their original credits were not included.')}</p><Link to="/stories" className="button button-blue">{t('Explore the stories')} ↗</Link></div>
   </section>;
 }
 
 function ImageArchive() {
-  return <section className="image-archive" aria-labelledby="image-archive-title"><div className="image-archive-heading"><p className="eyebrow">SUPPLIED PROJECT IMAGES · 16 FILES</p><h2 id="image-archive-title">The wider image archive.</h2><p>Explore selected visuals supplied in the images folder. Mission slides above use the images that match their subject; additional references are kept here with their own labels.</p></div><div className="image-archive-grid">{archiveImages.map(image => <figure className="image-archive-card" key={image.src}><div className={`image-archive-frame ${image.kind === 'diagram' ? 'is-diagram' : ''} ${image.kind === 'logo' ? 'is-logo' : ''}`}><img src={image.src} alt={image.alt} loading="lazy"/></div><figcaption><span>{image.type}</span><strong>{image.title}</strong></figcaption></figure>)}</div></section>;
+  const { t } = useLanguage();
+  return <section className="image-archive" aria-labelledby="image-archive-title"><div className="image-archive-heading"><p className="eyebrow">{t('SUPPLIED PROJECT IMAGES · 16 FILES')}</p><h2 id="image-archive-title">{t('The wider image archive.')}</h2><p>{t('Explore selected visuals supplied in the images folder. Mission slides above use the images that match their subject; additional references are kept here with their own labels.')}</p></div><div className="image-archive-grid">{archiveImages.map(image => <figure className="image-archive-card" key={image.src}><div className={`image-archive-frame ${image.kind === 'diagram' ? 'is-diagram' : ''} ${image.kind === 'logo' ? 'is-logo' : ''}`}><img src={image.src} alt={t(image.alt)} loading="lazy"/></div><figcaption><span>{t(image.type)}</span><strong>{t(image.title)}</strong></figcaption></figure>)}</div></section>;
 }
 
 function Stories() {
+  const { locale, t } = useLanguage();
+  const visibleStories = locale === 'fr' ? frenchStories : stories;
   useEffect(() => { const saved = sessionStorage.getItem('missionlens-archive-scroll'); if (saved !== null) { window.scrollTo(0, Number(saved)); sessionStorage.removeItem('missionlens-archive-scroll'); } }, []);
-  return <section className="archive-page section-shell"><PageIntro tag="THE ARCHIVE · 05 MISSIONS" title={<>Stories from<br/><em>the edge.</em></>} copy="Meet the machines that went to the Moon, Mars, and beyond. Each story is made to explore, one screen at a time."/><div className="archive-meta"><span>MISSION FILES</span><span>01 — 05</span></div><div className="story-grid">{stories.map((story, i) => <StoryCard key={story.id} story={story} index={i}/>)}</div><ImageArchive/><Sources/></section>;
+  return <section className="archive-page section-shell"><PageIntro tag={t('THE ARCHIVE · 05 MISSIONS')} title={<>{t('Stories from')}<br/><em>{t('the edge.')}</em></>} copy={t('Meet the machines that went to the Moon, Mars, and beyond. Each story is made to explore, one screen at a time.')}/><div className="archive-meta"><span>{t('MISSION FILES')}</span><span>01 — 05</span></div><div className="story-grid">{visibleStories.map((story, i) => <StoryCard key={story.id} story={story} index={i}/>)}</div><ImageArchive/><Sources/></section>;
 }
 
 function StoryCard({ story, compact = false, index = 0 }: { story: Story; compact?: boolean; index?: number }) {
+  const { locale, t } = useLanguage();
   const navigate = useNavigate();
   const preserveArchive = () => sessionStorage.setItem('missionlens-archive-scroll', String(window.scrollY));
   const cover = story.id === 'story-1' ? 'moon' : story.id === 'story-3' ? 'voyager' : story.id === 'story-5' ? 'ingenuity' : 'mars';
   const blurb = story.slides[0]?.paragraphs.slice(0, 2).join(' ');
-  const cardArt = artworkForSlide(story.id, 0)!;
+  const cardArt = artworkForLocale(story.id, 0, locale)!;
   return <article className={`story-card ${compact ? 'compact' : ''}`}>
-    <Link to={`/stories/${story.id}/read`} state={{ fromArchive: true }} onClick={preserveArchive} className={`story-art art-${cover}`} aria-label={`Read ${story.title}. Image: ${cardArt.alt}`}>
-      <img className={cardArt.kind === 'diagram' ? 'story-card-image is-diagram' : 'story-card-image'} src={cardArt.src} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = 'none'; }}/><span className="card-index">FILE {String(index + 1).padStart(2, '0')}</span><span className="art-fallback-label">{cardArt.credit}</span><span className="art-caption">{story.destination.toUpperCase()} · {story.year}</span>
+    <Link to={`/stories/${story.id}/read`} state={{ fromArchive: true }} onClick={preserveArchive} className={`story-art art-${cover}`} aria-label={`${t('Read the story')} ${story.title}. ${t('Image')}: ${cardArt.alt}`}>
+      <img className={cardArt.kind === 'diagram' ? 'story-card-image is-diagram' : 'story-card-image'} src={cardArt.src} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = 'none'; }}/><span className="card-index">{t('FILE')} {String(index + 1).padStart(2, '0')}</span><span className="art-fallback-label">{cardArt.credit}</span><span className="art-caption">{story.destination.toUpperCase()} · {story.year}</span>
     </Link>
-    <div className="story-card-body"><p className="card-kicker">{story.equipment}</p><h3><Link to={`/stories/${story.id}/read`} state={{ fromArchive: true }} onClick={preserveArchive}>{story.title}</Link></h3>{!compact && <p>{blurb}</p>}<div className="card-footer"><span>{story.year} <b>·</b> {story.destination}</span><button onClick={() => { preserveArchive(); navigate(`/stories/${story.id}/read`); }} aria-label={`Read the story: ${story.title}`}>Read the story <span>↗</span></button></div></div>
+      <div className="story-card-body"><p className="card-kicker">{story.equipment}</p><h3><Link to={`/stories/${story.id}/read`} state={{ fromArchive: true }} onClick={preserveArchive}>{story.title}</Link></h3>{!compact && <p>{blurb}</p>}<div className="card-footer"><span>{story.year} <b>·</b> {story.destination}</span><button onClick={() => { preserveArchive(); navigate(`/stories/${story.id}/read`); }} aria-label={`${t('Read the story')}: ${story.title}`}>{t('Read the story')} <span>↗</span></button></div></div>
   </article>;
 }
 
@@ -121,7 +133,9 @@ function SceneGraphic({ type }: { type: string }) {
 
 function StoryReader() {
   const { id = '' } = useParams();
-  const story = stories.find(s => s.id === id);
+  const { locale, t } = useLanguage();
+  const englishStory = stories.find(s => s.id === id);
+  const story = locale === 'fr' ? frenchStories.find(s => s.id === id) : englishStory;
   const navigate = useNavigate();
   const location = useLocation();
   const reduceMotion = useReducedMotion();
@@ -153,7 +167,8 @@ function StoryReader() {
   useEffect(() => { fetch('/audio/manifest.json').then(response => response.ok ? response.json() : null).then(manifest => { if (manifest?.tracks) setAudioTracks(manifest.tracks); if (manifest?.voice) setNarrationVoice(manifest.voice); }).catch(() => {}); }, []);
   const close = () => { cancel(); if (location.state?.fromArchive) navigate(-1); else navigate('/stories'); };
   const speakAt = useCallback((slideIndex: number, all: boolean, forceBrowser = false) => {
-    if (!story) return;
+    const source = englishStory;
+    if (!source) return;
     if (audioRef.current) {
       const previousAudio = audioRef.current;
       audioRef.current = null;
@@ -166,9 +181,9 @@ function StoryReader() {
     if (fallbackIntervalRef.current) window.clearInterval(fallbackIntervalRef.current);
     fallbackIntervalRef.current = undefined;
     const currentUtterance = utteranceRef.current; utteranceRef.current = null; if (currentUtterance) { currentUtterance.onend = null; currentUtterance.onerror = null; currentUtterance.onboundary = null; currentUtterance.onstart = null; } if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-    const slide = story.slides[slideIndex]; if (!slide) { cancel(); return; }
+    const slide = source.slides[slideIndex]; if (!slide) { cancel(); return; }
     const text = slide.paragraphs.join('\n\n');
-    const narrationPath = audioTracks[story.id]?.[String(slideIndex + 1)];
+    const narrationPath = audioTracks[source.id]?.[String(slideIndex + 1)];
     if (narrationPath && !forceBrowser) {
       const audio = new Audio(narrationPath);
       audio.preload = 'auto'; audio.volume = 1; audio.playbackRate = speed;
@@ -181,7 +196,7 @@ function StoryReader() {
       audio.onended = () => {
         if (audioRef.current !== audio) return;
         audioRef.current = null; setSpeaking(false); setPaused(false); setHighlight(-1);
-        if (allRef.current && slideIndex < story.slides.length - 1) { const next = slideIndex + 1; autoAdvanceRef.current = true; setIndex(next); window.setTimeout(() => speakAt(next, true), 100); }
+        if (allRef.current && slideIndex < source.slides.length - 1) { const next = slideIndex + 1; autoAdvanceRef.current = true; setIndex(next); window.setTimeout(() => speakAt(next, true), 100); }
         else if (allRef.current) { allRef.current = false; setReadAll(false); }
       };
       audio.onerror = () => { if (audioRef.current !== audio) return; audioRef.current = null; setSpeaking(false); setPaused(false); setHighlight(-1); speakAt(slideIndex, all, true); };
@@ -191,6 +206,7 @@ function StoryReader() {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
     utterance.rate = speed;
     const voice = voices.find(v => v.name === voiceName); if (voice) utterance.voice = voice;
     utteranceRef.current = utterance; allRef.current = all;
@@ -209,56 +225,68 @@ function StoryReader() {
       if (utteranceRef.current !== utterance) return;
       if (fallbackIntervalRef.current) window.clearInterval(fallbackIntervalRef.current); fallbackIntervalRef.current = undefined;
       utteranceRef.current = null; setSpeaking(false); setPaused(false); setHighlight(-1);
-      if (allRef.current && slideIndex < story.slides.length - 1) { const next = slideIndex + 1; autoAdvanceRef.current = true; setIndex(next); window.setTimeout(() => speakAt(next, true), 100); }
+      if (allRef.current && slideIndex < source.slides.length - 1) { const next = slideIndex + 1; autoAdvanceRef.current = true; setIndex(next); window.setTimeout(() => speakAt(next, true), 100); }
       else if (allRef.current) { allRef.current = false; setReadAll(false); }
     };
     utterance.onerror = () => { if (utteranceRef.current !== utterance) return; if (fallbackIntervalRef.current) window.clearInterval(fallbackIntervalRef.current); fallbackIntervalRef.current = undefined; setSpeaking(false); setPaused(false); setHighlight(-1); utteranceRef.current = null; if (allRef.current) { allRef.current = false; setReadAll(false); } };
     window.speechSynthesis.speak(utterance);
-  }, [story, speed, voices, voiceName, audioTracks, cancel]);
+  }, [englishStory, speed, voices, voiceName, audioTracks, cancel]);
   useEffect(() => { const handler = (e: KeyboardEvent) => { const t = e.target as HTMLElement | null; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return; if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'ArrowRight') setIndex(v => Math.min((story?.slides.length ?? 1) - 1, v + 1)); if (e.key === 'ArrowLeft') setIndex(v => Math.max(0, v - 1)); }; window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler); }, [story, location.state]);
   if (!story) return <NotFound/>;
   const slide = story.slides[index];
   const hasNarrationAudio = Boolean(audioTracks[story.id]?.[String(index + 1)]);
-  const slideArt = artworkForSlide(story.id, index)!;
+  const slideArt = artworkForLocale(story.id, index, locale)!;
   const slideText = slide.paragraphs.join('\n\n');
   const sentenceSpans = useMemo(() => { const result: { text: string; index: number }[] = []; const rx = /[^.!?]+(?:[.!?]+|$)/g; let m: RegExpExecArray | null; let n = 0; while ((m = rx.exec(slideText))) { result.push({ text: m[0], index: n++ }); } return result; }, [slideText]);
   const storyExhibit = exhibits.find(e => e.storyId === story.id)!;
+  const pdfFiles: Record<string, { en: string; fr?: string }> = {
+    'story-1': { en: 'MOON CAR.pdf' }, 'story-2': { en: 'VIKING 1.pdf' }, 'story-3': { en: 'Voyager 1.pdf' },
+    'story-4': { en: 'Opportunity.pdf' }, 'story-5': { en: 'Ingenuity.pdf' },
+  };
+  const frenchPdfName = pdfFiles[story.id].fr;
+  const frenchPdfAvailable = Boolean(frenchPdfName && storyPdfs[frenchPdfName]);
+  const pdfName = locale === 'fr' && frenchPdfAvailable ? frenchPdfName! : pdfFiles[story.id].en;
+  const pdfUrl = `/pdf%20files/${encodeURIComponent(pdfName)}`;
+  const pdfAvailable = Boolean(storyPdfs[pdfName]);
+  const alternatePdfName = frenchPdfAvailable ? (locale === 'fr' ? pdfFiles[story.id].en : frenchPdfName) : undefined;
   return <section className="reader-page">
-    <div className="reader-top"><button className="back-button" onClick={close}>← <span>Back to Stories</span></button><span className="reader-series">MISSIONLENS STORY FILE <b>·</b> {story.equipment.toUpperCase()}</span><button onClick={close} className="close-reader" aria-label="Close story">× <span>Close</span></button></div>
+    <div className="reader-top"><button className="back-button" onClick={close}>← <span>{t('Back to Stories')}</span></button><span className="reader-series">{t('MISSIONLENS STORY FILE')} <b>·</b> {story.equipment.toUpperCase()}</span><button onClick={close} className="close-reader" aria-label={t('Close story')}>× <span>{t('Close')}</span></button></div>
     <div className="reader-progress"><span style={{ width: `${((index + 1) / story.slides.length) * 100}%` }}/></div>
-    <div className="reader-workspace"><aside className="reader-rail"><p>STORY</p><strong>{story.title}</strong><div className="rail-separator"/><span>{story.destination.toUpperCase()}</span><span>{story.year}</span><div className="rail-counter">{String(index + 1).padStart(2, '0')}<i> / {String(story.slides.length).padStart(2, '0')}</i></div><Link to="/hardware" className="rail-link">Open this exhibit ↗</Link></aside>
+    <div className="reader-workspace"><aside className="reader-rail"><p>{t('STORY')}</p><strong>{story.title}</strong><div className="rail-separator"/><span>{story.destination.toUpperCase()}</span><span>{story.year}</span><div className="rail-counter">{String(index + 1).padStart(2, '0')}<i> / {String(story.slides.length).padStart(2, '0')}</i></div><Link to="/hardware" className="rail-link">{t('Open this exhibit ↗')}</Link></aside>
       <div className="reader-main"><AnimatePresence mode="wait"><motion.article key={`${story.id}-${index}`} className="reader-slide" initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -5 }} transition={reduceMotion ? reduced : { duration: .2, ease: 'easeOut' }}>
-        <div className="slide-copy"><p className="eyebrow">{story.equipment} <span>·</span> {String(slide.number).padStart(2, '0')} / {String(story.slides.length).padStart(2, '0')}</p><h1>{slide.title}</h1><div className="slide-text" aria-label="Story text">{sentenceSpans.map((item, i) => <span key={i} className={highlight === i ? 'spoken-sentence' : ''}>{item.text}</span>)}</div>
-          {!speechSupported && !hasNarrationAudio && <p className="speech-note">Narration is not available in this browser yet. The story text remains available to read.</p>}
-        </div><figure className="slide-visual"><div className="slide-image-stage"><SceneGraphic type={story.id === 'story-1' ? 'moon' : story.id === 'story-3' ? 'voyager' : story.id === 'story-5' ? 'ingenuity' : 'mars'}/><img className={slideArt.kind === 'diagram' ? 'reader-mission-image is-diagram' : 'reader-mission-image'} src={slideArt.src} alt={slideArt.alt} onError={e => { e.currentTarget.style.display = 'none'; }}/><span className="visual-fallback-label">{slideArt.kind === 'diagram' ? 'MISSION SYSTEM DIAGRAM' : slideArt.kind === 'poster' ? 'MISSION POSTER' : 'MISSION PHOTOGRAPH'}</span><a href={storyExhibit.source} target="_blank" rel="noreferrer">Mission source ↗</a></div><figcaption><span>{slideArt.credit}</span>{slideArt.description}{slideArt.source && <><br/><a href={slideArt.source} target="_blank" rel="noreferrer">Image source ↗</a></>}</figcaption></figure>
+        <div className="slide-copy"><p className="eyebrow">{story.equipment} <span>·</span> {String(slide.number).padStart(2, '0')} / {String(story.slides.length).padStart(2, '0')}</p><h1>{slide.title}</h1><div className="slide-text" aria-label={t('Story text')}>{sentenceSpans.map((item, i) => <span key={i} className={highlight === i ? 'spoken-sentence' : ''}>{item.text}</span>)}</div>
+          {!speechSupported && !hasNarrationAudio && <p className="speech-note">{t('Narration is not available in this browser yet. The story text remains available to read.')}</p>}
+        </div><figure className="slide-visual"><div className="slide-image-stage"><SceneGraphic type={story.id === 'story-1' ? 'moon' : story.id === 'story-3' ? 'voyager' : story.id === 'story-5' ? 'ingenuity' : 'mars'}/><img className={slideArt.kind === 'diagram' ? 'reader-mission-image is-diagram' : 'reader-mission-image'} src={slideArt.src} alt={t(slideArt.alt)} onError={e => { e.currentTarget.style.display = 'none'; }}/><span className="visual-fallback-label">{t(slideArt.kind === 'diagram' ? 'MISSION SYSTEM DIAGRAM' : slideArt.kind === 'poster' ? 'MISSION POSTER' : 'MISSION PHOTOGRAPH')}</span><a href={storyExhibit.source} target="_blank" rel="noreferrer">{t('Mission source ↗')}</a></div><figcaption><span>{t(slideArt.credit)}</span>{t(slideArt.description)}{slideArt.source && <><br/><a href={slideArt.source} target="_blank" rel="noreferrer">{t('Image source ↗')}</a></>}</figcaption></figure>
       </motion.article></AnimatePresence>
-        <div className="reader-controls"><div className="reader-nav"><button className="control-button" disabled={index === 0} onClick={() => setIndex(v => Math.max(0, v - 1))} aria-label="Previous slide">← <span>Previous</span></button><span className="control-count">{String(index + 1).padStart(2, '0')} <i>/</i> {String(story.slides.length).padStart(2, '0')}</span><button className="control-button next" disabled={index === story.slides.length - 1} onClick={() => setIndex(v => Math.min(story.slides.length - 1, v + 1))} aria-label="Next slide"><span>Next</span> →</button></div>
-          <div className="narration-panel"><div className="narration-actions"><button className="listen-button" disabled={!speechSupported && !hasNarrationAudio} onClick={() => { if (speaking && !paused) { if (audioRef.current) audioRef.current.pause(); else window.speechSynthesis.pause(); setPaused(true); } else if (speaking && paused) { if (audioRef.current) void audioRef.current.play(); else window.speechSynthesis.resume(); setPaused(false); } else { setReadAll(true); speakAt(index, true); } }}>{speaking ? paused ? '▶ Resume' : 'Ⅱ Pause' : '▶ Read from this slide'}</button><button className={readAll ? 'all-button story-playing' : 'all-button'} aria-live="polite" disabled={!speechSupported && !hasNarrationAudio || readAll} onClick={() => { cancel(); if (index === 0) { setReadAll(true); speakAt(0, true); } else { setIndex(0); window.setTimeout(() => { setReadAll(true); speakAt(0, true); }, 0); } }}>{readAll ? '● Story playing' : 'Listen to entire story'}</button><button className="all-button" disabled={!speechSupported && !hasNarrationAudio} onClick={() => speakAt(index, readAll)}>↻ Replay slide</button><button className="all-button" disabled={!speechSupported && !hasNarrationAudio || !speaking} onClick={cancel}>■ Stop</button></div>
-            <div className="narration-settings"><label>Voice {hasNarrationAudio ? <span>ElevenLabs / {narrationVoice || 'Narrator'}</span> : <select value={voiceName} onChange={e => { setVoiceName(e.target.value); if (speaking) cancel(); }}><option value="">System default</option>{voices.map(v => <option key={`${v.name}-${v.lang}`} value={v.name}>{v.name} · {v.lang}</option>)}</select>}</label><label>Speed <select value={speed} onChange={e => { const nextSpeed = Number(e.target.value); setSpeed(nextSpeed); if (audioRef.current) audioRef.current.playbackRate = nextSpeed; }}><option value="0.8">Slow</option><option value="1">Normal</option><option value="1.2">Fast</option></select></label><span className="caption-label">Text captions · approximate sentence highlight during narration</span></div></div>
+        <div className="story-download"><div>{pdfAvailable ? <a className="button button-blue" href={pdfUrl} download={pdfName}>{t(pdfName === frenchPdfName ? 'Download French PDF to read offline' : 'Download English PDF to read offline')}</a> : <button className="button button-blue" disabled>{t('PDF not available yet')}</button>}{alternatePdfName && <a className="button button-blue button-pdf-alternate" href={`/pdf%20files/${encodeURIComponent(alternatePdfName)}`} download={alternatePdfName}>{t(alternatePdfName === frenchPdfName ? 'Download French PDF to read offline' : 'Download English PDF to read offline')}</a>}<p>{pdfAvailable ? t('This PDF can be read offline. Interactive 3D models and embedded videos may still need an internet connection.') : `${t('PDF not available yet')}: ${pdfName}`}</p></div></div>
+        <div className="reader-controls"><div className="reader-nav"><button className="control-button" disabled={index === 0} onClick={() => setIndex(v => Math.max(0, v - 1))} aria-label={t('Previous slide')}>← <span>{t('Previous')}</span></button><span className="control-count">{String(index + 1).padStart(2, '0')} <i>/</i> {String(story.slides.length).padStart(2, '0')}</span><button className="control-button next" disabled={index === story.slides.length - 1} onClick={() => setIndex(v => Math.min(story.slides.length - 1, v + 1))} aria-label={t('Next slide')}><span>{t('Next')}</span> →</button></div>
+          <div className="narration-panel"><div className="narration-actions"><button className="listen-button" disabled={!speechSupported && !hasNarrationAudio} onClick={() => { if (speaking && !paused) { if (audioRef.current) audioRef.current.pause(); else window.speechSynthesis.pause(); setPaused(true); } else if (speaking && paused) { if (audioRef.current) void audioRef.current.play(); else window.speechSynthesis.resume(); setPaused(false); } else { setReadAll(true); speakAt(index, true); } }}>{speaking ? paused ? `▶ ${t('Resume')}` : `Ⅱ ${t('Pause')}` : `▶ ${t('Read from this slide')}`}</button><button className={readAll ? 'all-button story-playing' : 'all-button'} aria-live="polite" disabled={!speechSupported && !hasNarrationAudio || readAll} onClick={() => { cancel(); if (index === 0) { setReadAll(true); speakAt(0, true); } else { setIndex(0); window.setTimeout(() => { setReadAll(true); speakAt(0, true); }, 0); } }}>{readAll ? `● ${t('Story playing')}` : t('Listen to entire story')}</button><button className="all-button" disabled={!speechSupported && !hasNarrationAudio} onClick={() => speakAt(index, readAll)}>↻ {t('Replay slide')}</button><button className="all-button" disabled={!speechSupported && !hasNarrationAudio || !speaking} onClick={cancel}>■ {t('Stop')}</button></div>
+            <div className="narration-settings"><label>{t('Voice')} {hasNarrationAudio ? <span>ElevenLabs / {narrationVoice || 'Narrator'}</span> : <select aria-label={t('Voice')} value={voiceName} onChange={e => { setVoiceName(e.target.value); if (speaking) cancel(); }}><option value="">{t('System default')}</option>{voices.map(v => <option key={`${v.name}-${v.lang}`} value={v.name}>{v.name} · {v.lang}</option>)}</select>}</label><label>{t('Speed')} <select aria-label={t('Speed')} value={speed} onChange={e => { const nextSpeed = Number(e.target.value); setSpeed(nextSpeed); if (audioRef.current) audioRef.current.playbackRate = nextSpeed; }}><option value="0.8">{t('Slow')}</option><option value="1">{t('Normal')}</option><option value="1.2">{t('Fast')}</option></select></label><span className="caption-label">{t('Text captions · approximate sentence highlight during narration')}</span>{locale === 'fr' && <span className="narration-language">{t('Audio narration in English')}</span>}</div></div>
         </div>
       </div>
     </div>
-    {index === story.slides.length - 1 && <div className="reader-finish"><span>STORY COMPLETE</span><p>Keep exploring this mission.</p><Link className="button button-blue" to="/hardware">Visit Hardware Lab ↗</Link><button className="text-link" onClick={close}>Back to all stories →</button></div>}
+    {index === story.slides.length - 1 && <div className="reader-finish"><span>{t('STORY COMPLETE')}</span><p>{t('Keep exploring this mission.')}</p><Link className="button button-blue" to="/hardware">{t('Visit Hardware Lab ↗')}</Link><button className="text-link" onClick={close}>{t('Back to all stories →')}</button></div>}
   </section>;
 }
 
 function Videos() {
+  const { t } = useLanguage();
   const videos = [
-    { id: 'P4boyXQuUIw', title: 'Mission video 01', url: 'https://youtu.be/P4boyXQuUIw?si=Ovzip9muNIKb53Mi' },
-    { id: 'iIJcqiqYXG8', title: 'Mission video 02', url: 'https://youtu.be/iIJcqiqYXG8?si=6MTfjrPBB_5Ux9MG' },
-    { id: 'EbCNU6aCDuM', title: 'Mission video 03', url: 'https://www.youtube.com/watch?v=EbCNU6aCDuM' },
-    { id: 'yC-6LuHos8s', title: 'Mission video 04', url: 'https://youtu.be/yC-6LuHos8s?si=Q3LxxDVJMQcbKAKa' },
+    { id: 'P4boyXQuUIw', title: t('Mission video 01'), url: 'https://youtu.be/P4boyXQuUIw?si=Ovzip9muNIKb53Mi' },
+    { id: 'iIJcqiqYXG8', title: t('Mission video 02'), url: 'https://youtu.be/iIJcqiqYXG8?si=6MTfjrPBB_5Ux9MG' },
+    { id: 'EbCNU6aCDuM', title: t('Mission video 03'), url: 'https://www.youtube.com/watch?v=EbCNU6aCDuM' },
+    { id: 'yC-6LuHos8s', title: t('Mission video 04'), url: 'https://youtu.be/yC-6LuHos8s?si=Q3LxxDVJMQcbKAKa' },
   ];
   const localVideos = [
     { title: 'Lunar surface, first-person view', description: 'Explore a supplied first-person view across the lunar surface.', src: '/videos/lunar-trek-first-person-view.mp4' },
     { title: 'Lunar Trek, third-person view', description: 'See the lunar exploration scene from a third-person perspective.', src: '/videos/lunar-trek-third-person-view.mp4' },
   ];
-  return <section className="videos-page section-shell"><PageIntro tag="WATCH · 06 VIDEOS" title={<>See the mission<br/><em>in motion.</em></>} copy="Watch videos that bring space exploration to life:from missions and machines to views across the lunar surface."/><div className="video-grid">{videos.map(v => <article key={v.id} className="video-card"><div className="video-frame"><iframe src={`https://www.youtube-nocookie.com/embed/${v.id}`} title={v.title} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen/><noscript><a href={v.url}>Watch on YouTube</a></noscript></div><div className="video-caption"><span>VIDEO FILE / {v.id}</span><h3>{v.title}</h3><a href={v.url} target="_blank" rel="noreferrer">Watch on YouTube ↗</a></div></article>)}</div>{localVideos.map(video => <article key={video.src} className="local-video-card"><div className="local-video-title"><span>LOCAL VIDEO · PROJECT ASSET</span><h2>{video.title}</h2><p>{video.description}</p></div><video controls preload="metadata" playsInline src={video.src}>Your browser does not support this video. You can still explore the stories and labs.</video></article>)}</section>;
+  return <section className="videos-page section-shell"><PageIntro tag={t('WATCH · 06 VIDEOS')} title={<>{t('See the mission')}<br/><em>{t('in motion.')}</em></>} copy={t('Watch videos that bring space exploration to life:from missions and machines to views across the lunar surface.')}/><div className="video-grid">{videos.map(v => <article key={v.id} className="video-card"><div className="video-frame"><iframe src={`https://www.youtube-nocookie.com/embed/${v.id}`} title={v.title} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen/><noscript><a href={v.url}>{t('Watch on YouTube ↗')}</a></noscript></div><div className="video-caption"><span>{t('VIDEO FILE')} / {v.id}</span><h3>{v.title}</h3><a href={v.url} target="_blank" rel="noreferrer">{t('Watch on YouTube ↗')}</a></div></article>)}</div>{localVideos.map(video => <article key={video.src} className="local-video-card"><div className="local-video-title"><span>{t('LOCAL VIDEO · PROJECT ASSET')}</span><h2>{t(video.title)}</h2><p>{t(video.description)}</p></div><video controls preload="metadata" playsInline src={video.src}>{t('Your browser does not support this video. You can still explore the stories and labs.')}</video></article>)}</section>;
 }
 
-function Sources() { return <details className="sources"><summary>Sources & asset notes</summary><div className="sources-list"><p>Mission facts and image descriptions are based on NASA mission pages linked from each story and exhibit.</p><p>Local 3D model files were supplied in the project folder. Their original authorship and reuse terms were not included with the files; source metadata is therefore marked unavailable on each model exhibit.</p><p>The landing video and lunar viewpoint video are supplied local project assets. No NASA logo or endorsement is implied.</p>{exhibits.map(e => <a key={e.storyId} href={e.source} target="_blank" rel="noreferrer">{e.sourceLabel} ↗</a>)}</div></details>; }
+function Sources() { const { t } = useLanguage(); return <details className="sources"><summary>{t('Sources & asset notes')}</summary><div className="sources-list"><p>{t('Mission facts and image descriptions are based on NASA mission pages linked from each story and exhibit.')}</p><p>{t('Local 3D model files were supplied in the project folder. Their original authorship and reuse terms were not included with the files; source metadata is therefore marked unavailable on each model exhibit.')}</p><p>{t('The landing video and lunar viewpoint video are supplied local project assets. No NASA logo or endorsement is implied.')}</p>{exhibits.map(e => <a key={e.storyId} href={e.source} target="_blank" rel="noreferrer">{e.sourceLabel} ↗</a>)}</div></details>; }
 function PageIntro({ tag, title, copy }: { tag: string; title: ReactNode; copy: string }) { return <div className="page-intro"><p className="eyebrow"><span className="signal-dot"/>{tag}</p><h1>{title}</h1><p>{copy}</p></div>; }
-function NotFound() { return <section className="not-found section-shell"><p className="eyebrow">SIGNAL LOST</p><h1>This page drifted<br/><em>off course.</em></h1><Link to="/" className="button button-blue">Return to MissionLens ↗</Link></section>; }
-function Footer() { return <footer className="site-footer"><Link to="/" className="brand" aria-label="MissionLens home"><BrandLogo/></Link><p>Curiosity, carried farther.</p><div><Link to="/stories">Stories</Link><Link to="/hardware">Hardware Lab</Link><Link to="/videos">Videos</Link><Link to="/about">About</Link></div><small>AN INDEPENDENT EDUCATIONAL EXPERIENCE · NOT AFFILIATED WITH NASA</small></footer>; }
+function NotFound() { const { t } = useLanguage(); return <section className="not-found section-shell"><p className="eyebrow">{t('SIGNAL LOST')}</p><h1>{t('This page drifted')}<br/><em>{t('off course.')}</em></h1><Link to="/" className="button button-blue">{t('Return to MissionLens ↗')}</Link></section>; }
+function Footer() { const { t } = useLanguage(); return <footer className="site-footer"><Link to="/" className="brand" aria-label={t('MissionLens home')}><BrandLogo/></Link><p>{t('Curiosity, carried farther.')}</p><div><Link to="/stories">{t('Stories')}</Link><Link to="/hardware">{t('Hardware Lab')}</Link><Link to="/videos">{t('Videos')}</Link><Link to="/about">{t('About')}</Link></div><small>{t('AN INDEPENDENT EDUCATIONAL EXPERIENCE · NOT AFFILIATED WITH NASA')}</small></footer>; }
 
 export default App;

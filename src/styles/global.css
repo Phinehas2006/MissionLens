@@ -43,3 +43,16 @@
 
 @media(min-width:621px) and (max-width:900px){.slide-visual{min-height:0}}
 .reader-rail{color:#bfd0e6}.reader-rail>p{color:#ff7a89}.reader-rail strong,.rail-counter{color:#f3f7ff}.rail-counter i{color:#adc1dc}.rail-link{color:#81baff}.reader-rail .rail-separator{border-color:#617997}
+
+.language-switch{display:flex;align-items:center;gap:8px;color:#d5e1f0;font-size:11px;font-weight:600}
+.language-switch select{font:inherit;color:#f3f7ff;background:#10274a;border:1px solid rgba(175,202,238,.42);border-radius:3px;padding:8px 25px 8px 10px;min-height:36px;cursor:pointer}
+.language-switch select:focus-visible{outline:2px solid #75b7ff;outline-offset:2px}
+.language-switch option{background:#10274a;color:#fff}
+.story-download{display:flex;justify-content:flex-end;padding:13px 18px;background:#f9fbfd;border:1px solid #dbe4ee;border-top:0}
+.story-download>div{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.story-download .button{min-height:38px;gap:8px;font-size:11px}
+.story-download .button-pdf-alternate{background:#16345b;border:1px solid #5178a7}
+.story-download p{max-width:480px;margin:0;color:#aabbd2;font-size:10px;line-height:1.55}
+.narration-language{font-size:10px;color:#dfb963;font-weight:600}
+@media(max-width:900px){.nav-links .language-switch{align-self:flex-start;margin-top:8px}}
+@media(max-width:620px){.story-download{padding:12px;justify-content:stretch}.story-download>div{align-items:flex-start;flex-direction:column;gap:8px}.story-download .button{width:100%}.story-download p{font-size:9px}.language-switch{padding:6px 0}}
